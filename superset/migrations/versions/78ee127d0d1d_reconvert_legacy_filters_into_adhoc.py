@@ -66,7 +66,7 @@ def upgrade():
                 if source != target:
                     slc.params = json.dumps(target, sort_keys=True)
             except Exception as ex:
-                logging.warn(ex)
+                logging.warning(ex)
 
     session.commit()
     session.close()
