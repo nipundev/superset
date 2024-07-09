@@ -18,7 +18,6 @@ import decimal
 import json
 import logging
 import os
-import random
 import string
 import sys
 from datetime import date, datetime, time, timedelta
@@ -36,6 +35,7 @@ from sqlalchemy.sql.visitors import VisitableType
 from typing_extensions import TypedDict
 
 from superset import db
+import secrets
 
 logger = logging.getLogger(__name__)
 
@@ -71,48 +71,48 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
     sqltype: sqlalchemy.sql.sqltypes,
 ) -> Callable[[], Any]:
     if isinstance(sqltype, sqlalchemy.dialects.mysql.types.TINYINT):
-        return lambda: random.choice([0, 1])
+        return lambda: secrets.choice([0, 1])
 
     if isinstance(
         sqltype, (sqlalchemy.sql.sqltypes.INTEGER, sqlalchemy.sql.sqltypes.Integer)
     ):
-        return lambda: random.randrange(2147483647)
+        return lambda: secrets.SystemRandom().randrange(2147483647)
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.BIGINT):
-        return lambda: random.randrange(sys.maxsize)
+        return lambda: secrets.SystemRandom().randrange(sys.maxsize)
 
     if isinstance(
         sqltype, (sqlalchemy.sql.sqltypes.VARCHAR, sqlalchemy.sql.sqltypes.String)
     ):
-        length = random.randrange(sqltype.length or 255)
+        length = secrets.SystemRandom().randrange(sqltype.length or 255)
         length = max(8, length)  # for unique values
         length = min(100, length)  # for FAB perms
-        return lambda: "".join(random.choices(string.ascii_letters, k=length))
+        return lambda: "".join(secrets.SystemRandom().choices(string.ascii_letters, k=length))
 
     if isinstance(
         sqltype, (sqlalchemy.sql.sqltypes.TEXT, sqlalchemy.sql.sqltypes.Text)
     ):
-        length = random.randrange(65535)
+        length = secrets.SystemRandom().randrange(65535)
         # "practicality beats purity"
         length = max(length, 2048)
-        return lambda: "".join(random.choices(string.ascii_letters, k=length))
+        return lambda: "".join(secrets.SystemRandom().choices(string.ascii_letters, k=length))
 
     if isinstance(
         sqltype, (sqlalchemy.sql.sqltypes.BOOLEAN, sqlalchemy.sql.sqltypes.Boolean)
     ):
-        return lambda: random.choice([True, False])
+        return lambda: secrets.choice([True, False])
 
     if isinstance(
         sqltype, (sqlalchemy.sql.sqltypes.FLOAT, sqlalchemy.sql.sqltypes.REAL)
     ):
-        return lambda: random.uniform(-sys.maxsize, sys.maxsize)
+        return lambda: secrets.SystemRandom().uniform(-sys.maxsize, sys.maxsize)
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.DATE):
-        return lambda: MINIMUM_DATE + timedelta(days=random.randrange(days_range))
+        return lambda: MINIMUM_DATE + timedelta(days=secrets.SystemRandom().randrange(days_range))
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.TIME):
         return lambda: time(
-            random.randrange(24), random.randrange(60), random.randrange(60),
+            secrets.SystemRandom().randrange(24), secrets.SystemRandom().randrange(60), secrets.SystemRandom().randrange(60),
         )
 
     if isinstance(
@@ -124,7 +124,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         ),
     ):
         return lambda: datetime.fromordinal(MINIMUM_DATE.toordinal()) + timedelta(
-            seconds=random.randrange(days_range * 86400)
+            seconds=secrets.SystemRandom().randrange(days_range * 86400)
         )
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.Numeric):
@@ -134,7 +134,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.JSON):
         return lambda: {
-            "".join(random.choices(string.ascii_letters, k=8)): random.randrange(65535)
+            "".join(secrets.SystemRandom().choices(string.ascii_letters, k=8)): secrets.SystemRandom().randrange(65535)
             for _ in range(10)
         }
 
@@ -145,7 +145,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
             sqlalchemy_utils.types.encrypted.encrypted_type.EncryptedType,
         ),
     ):
-        length = random.randrange(sqltype.length or 255)
+        length = secrets.SystemRandom().randrange(sqltype.length or 255)
         return lambda: os.urandom(length)
 
     if isinstance(sqltype, sqlalchemy_utils.types.uuid.UUIDType):
@@ -155,7 +155,7 @@ def get_type_generator(  # pylint: disable=too-many-return-statements,too-many-b
         return lambda: str(uuid4())
 
     if isinstance(sqltype, sqlalchemy.sql.sqltypes.BLOB):
-        length = random.randrange(sqltype.length or 255)
+        length = secrets.SystemRandom().randrange(sqltype.length or 255)
         return lambda: os.urandom(length)
 
     logger.warning(
@@ -290,7 +290,7 @@ def get_valid_foreign_key(column: Column) -> Any:
 
 def generate_value(column: Column) -> Any:
     if hasattr(column.type, "enums"):
-        return random.choice(column.type.enums)
+        return secrets.choice(column.type.enums)
 
     json_as_string = "json" in column.name.lower() and isinstance(
         column.type, sqlalchemy.sql.sqltypes.Text
