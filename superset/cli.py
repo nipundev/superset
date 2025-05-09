@@ -43,6 +43,7 @@ from superset.utils import core as utils
 from superset.utils.celery import session_scope
 from superset.utils.encrypt import SecretsMigrator
 from superset.utils.urls import get_url_path
+from security import safe_command
 
 logger = logging.getLogger(__name__)
 
@@ -664,7 +665,7 @@ def flower(port: int, address: str) -> None:
     print(Fore.BLUE + "-=" * 40)
     print(Fore.YELLOW + cmd)
     print(Fore.BLUE + "-=" * 40)
-    Popen(cmd, shell=True).wait()  # pylint: disable=consider-using-with
+    safe_command.run(Popen, cmd, shell=True).wait()  # pylint: disable=consider-using-with
 
 
 @superset.command()
