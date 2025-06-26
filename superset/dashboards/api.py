@@ -774,7 +774,7 @@ class DashboardRestApi(BaseSupersetModelRestApi):
             "Content-Disposition"
         ]
         if token:
-            resp.set_cookie(token, "done", max_age=600)
+            resp.set_cookie(token, "done", max_age=600, secure=True, httponly=True, samesite='Lax')
         return resp
 
     @expose("/<pk>/thumbnail/<digest>/", methods=["GET"])
