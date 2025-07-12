@@ -53,7 +53,7 @@ def request(
         f"https://api.github.com/{endpoint.lstrip('/')}",
         headers={"Authorization": f"Bearer {github_token}"},
         **kwargs,
-    ).json()
+    timeout=60).json()
     if "message" in resp:
         raise ClickException(f"{endpoint} >> {resp['message']} <<")
     return resp
